@@ -2,7 +2,7 @@
 ## A Quadtree implementation
 ##
 
-import math
+import math, ropes
 
 type
     GridUnit = float
@@ -62,6 +62,31 @@ proc newQuadtree*[E: Quadable](
         divideAttempts: divideAttempts,
         root: nil
     )
+
+
+proc `$`[E]( node: Node[E], accum: var Rope ) =
+    ## Convert a node to a string and add it to a Rope
+    if node == nil:
+        accum.add("empty")
+    elif node.kind == leaf:
+        accum.add($(node.elems))
+    else:
+        accum.add("nw: (")
+        `$`[E](node.nw, accum)
+        accum.add("), ne: (")
+        `$`[E](node.ne, accum)
+        accum.add("), se: (")
+        `$`[E](node.se, accum)
+        accum.add("), sw: (")
+        `$`[E](node.sw, accum)
+        accum.add(")")
+
+proc `$`*[E: Quadable]( tree: Quadtree[E] ): string =
+    ## Convert a Quadtree to a string
+    var accum = rope("Quadtree(")
+    `$`[E](tree.root, accum)
+    accum.add(")")
+    return $accum
 
 
 proc createRoot[E]( tree: var Quadtree[E], elem: E ) =
