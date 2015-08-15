@@ -108,13 +108,27 @@ proc createRoot[E]( tree: var Quadtree[E], elem: E ) =
         elems: @[ elem ]
     )
 
+proc insert[E: Quadable]( tree: var Quadtree[E], node: var Node[E], elem: E ) =
+    ## Adds the given value to this node
+    if node == nil:
+        raise newException(AssertionError, "Unimplemented")
+    elif node.kind == leaf:
+        if node.elems.len < tree.maxInQuadrant:
+            node.elems.add( elem )
+        else:
+            raise newException(AssertionError, "Unimplemented")
+    else:
+        raise newException(AssertionError, "Unimplemented")
+
+
 proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
     ## Adds a new element to a quadtree
 
     if tree.root == nil:
         createRoot(tree, elem)
     else:
-        discard
+        tree.insert(tree.root, elem)
+
 
 proc fetch[E]( node: Node[E], x, y: GridUnit ): seq[E] =
     ## Descends into a tree to find the values stored for a given point
