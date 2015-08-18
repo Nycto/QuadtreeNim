@@ -101,8 +101,21 @@ suite "Quadtrees should":
         require(tree.bounds.get ==
             (top: -174756, left: -174758, width: 524288, height: 524288))
 
-    test "Not allow a quadrant to be smaller than '1'":
-        discard
+    test "Allow the same element to be added many times":
+        var tree = newQuadtree[Box]()
+        tree.insert( (x: 0, y: 0, width: 1, height: 1) )
+        tree.insert( (x: 0, y: 0, width: 1, height: 1) )
+        tree.insert( (x: 0, y: 0, width: 1, height: 1) )
+        tree.insert( (x: 0, y: 0, width: 1, height: 1) )
+        tree.insert( (x: 0, y: 0, width: 1, height: 1) )
+
+        require(tree.fetch(0, 0) == @[
+            (x: 0, y: 0, width: 1, height: 1),
+            (x: 0, y: 0, width: 1, height: 1),
+            (x: 0, y: 0, width: 1, height: 1),
+            (x: 0, y: 0, width: 1, height: 1),
+            (x: 0, y: 0, width: 1, height: 1)
+        ])
 
     test "Throw an error when an element isnt added to any quadrant":
         discard

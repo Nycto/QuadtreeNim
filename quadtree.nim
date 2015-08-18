@@ -61,6 +61,10 @@ proc fullSize[E]( node: Node[E] ): int {.inline.} =
     ## The full width of a node
     2 * node.halfSize
 
+proc canSubdivide[E]( node: Node[E] ): bool {.inline.} =
+    ## Returns whether a node can be subdivided further
+    node.halfSize > 1
+
 proc quadrantBox[E]( node: Node[E], quad: Quadrant ): BoundingBox {.inline.} =
     ## Returns the bounding box for a quadrant
     let size = node.halfSize
@@ -186,11 +190,11 @@ proc insert[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
     # If we have reached a terminal node, figure out if it has capacity to
     # store another element, or if it needs to be subdivided
     if node.isLeaf:
-        if node.elems.len < tree.maxInQuadrant:
-            node.elems.add( elem )
-        else:
+        if node.elems.len >= tree.maxInQuadrant and node.canSubdivide:
             tree.subdivide(node)
             tree.insert( node, elem )
+        else:
+            node.elems.add( elem )
 
     # Recurse deeper into the tree to insert this node
     else:
