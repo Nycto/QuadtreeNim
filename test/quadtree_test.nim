@@ -1,9 +1,13 @@
 import unittest, quadtree, optional_t
 
 
-type Box = tuple[x, y, width, height: int]
+type
+    Box = tuple[x, y, width, height: int]
 
-proc boundingBox*( b: Box ): BoundingBox =
+    InvalidContains = object
+        x, y, width, height: int
+
+proc boundingBox*( b: Box|InvalidContains ): BoundingBox =
     return ( top: b.y, left: b.x, width: b.width, height: b.height )
 
 proc contains*( bound: BoundingBox, elem: Box ): bool =
@@ -12,6 +16,8 @@ proc contains*( bound: BoundingBox, elem: Box ): bool =
     if bound.top + bound.height < elem.y: return false
     if bound.top > elem.y + elem.height: return false
     return true
+
+proc contains*( bound: BoundingBox, elem: InvalidContains ): bool = false
 
 
 suite "Quadtrees should":
@@ -146,7 +152,10 @@ suite "Quadtrees should":
         require(tree.fetch(20, 5) == @[])
 
     test "Throw an error when an element isnt added to any quadrant":
-        discard
+        var tree = newQuadtree[InvalidContains](maxInQuadrant = 1)
+        tree.insert( InvalidContains(x: 1, y: 1, width: 3, height: 3) )
+        expect(AssertionError):
+            tree.insert( InvalidContains(x: 9, y: 9, width: 3, height: 3) )
 
     test "Disallow negative widths and heights on a bounding box":
         discard
