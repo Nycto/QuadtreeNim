@@ -158,5 +158,11 @@ suite "Quadtrees should":
             tree.insert( InvalidContains(x: 9, y: 9, width: 3, height: 3) )
 
     test "Disallow negative widths and heights on a bounding box":
-        discard
+        var tree = newQuadtree[Box]()
+        expect(AssertionError):
+            tree.insert( (x: 1, y: 1, width: -3, height: 3) )
+        expect(AssertionError):
+            tree.insert( (x: 1, y: 1, width: 3, height: -3) )
+        expect(AssertionError):
+            tree.insert( (x: 1, y: 1, width: -3, height: -3) )
 

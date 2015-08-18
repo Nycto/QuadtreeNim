@@ -223,6 +223,8 @@ proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
     ## Adds a new element to a quadtree
     let box = elem.boundingBox
 
+    assert(box.width >= 0 and box.height >= 0)
+
     # Creates a root node when adding to an empty tree
     if tree.root == nil:
         tree.root = Node[E](
