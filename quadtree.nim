@@ -271,15 +271,16 @@ proc fetch[E]( node: Node[E], x, y: int ): seq[E] =
     ## Descends into a tree to find the values stored for a given point
     if node == nil:
         return @[]
+
+    let horiz = getHalf(node.left, node.halfSize, x)
+    let vert = getHalf(node.top, node.halfSize, y)
+
+    if horiz == Half.neither or vert == Half.neither:
+        return @[]
     elif node.isLeaf:
         return node.elems
     else:
-        let horiz = getHalf(node.top, node.halfSize, x)
-        let vert = getHalf(node.left, node.halfSize, y)
-        if horiz == Half.neither or vert == Half.neither:
-            return @[]
-        else:
-            return fetch(node.quad[getQuadrant(vert, horiz)], x, y)
+        return fetch(node.quad[getQuadrant(vert, horiz)], x, y)
 
 proc fetch*[E: Quadable]( tree: Quadtree[E], x, y: int ): seq[E] =
     ## Returns the elements at the given coordinate

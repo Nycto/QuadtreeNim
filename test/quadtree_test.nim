@@ -126,12 +126,28 @@ suite "Quadtrees should":
         require(tree.fetch(10, 10) == @[])
         require(tree.fetch(0, 11) == @[])
 
+    test "Fetching from outside a tree with a single node tree":
+        var tree = newQuadtree[Box](maxInQuadrant = 1)
+        tree.insert( (x: 1, y: 1, width: 3, height: 3) )
+        require(tree.bounds.get == (top: 0, left: 0, width: 16, height: 16))
+        require(tree.fetch(-5, 5) == @[])
+        require(tree.fetch(5, -5) == @[])
+        require(tree.fetch(5, 20) == @[])
+        require(tree.fetch(20, 5) == @[])
+
+    test "Fetching from outside a tree with a multi-node tree":
+        var tree = newQuadtree[Box](maxInQuadrant = 1)
+        tree.insert( (x: 1, y: 1, width: 3, height: 3) )
+        tree.insert( (x: 9, y: 9, width: 3, height: 3) )
+        require(tree.bounds.get == (top: 0, left: 0, width: 16, height: 16))
+        require(tree.fetch(-5, 5) == @[])
+        require(tree.fetch(5, -5) == @[])
+        require(tree.fetch(5, 20) == @[])
+        require(tree.fetch(20, 5) == @[])
+
     test "Throw an error when an element isnt added to any quadrant":
         discard
 
     test "Disallow negative widths and heights on a bounding box":
-        discard
-
-    test "Fetching from outside a tree":
         discard
 
