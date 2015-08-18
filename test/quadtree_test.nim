@@ -117,6 +117,15 @@ suite "Quadtrees should":
             (x: 0, y: 0, width: 1, height: 1)
         ])
 
+    test "Fetching from an empty quadrant":
+        var tree = newQuadtree[Box](maxInQuadrant = 1)
+        tree.insert( (x: 1, y: 1, width: 3, height: 3) )
+        tree.insert( (x: 2, y: 2, width: 2, height: 2) )
+        require(tree.bounds.get == (top: 0, left: 0, width: 16, height: 16))
+        require(tree.fetch(9, 0) == @[])
+        require(tree.fetch(10, 10) == @[])
+        require(tree.fetch(0, 11) == @[])
+
     test "Throw an error when an element isnt added to any quadrant":
         discard
 
@@ -124,8 +133,5 @@ suite "Quadtrees should":
         discard
 
     test "Fetching from outside a tree":
-        discard
-
-    test "Fetching from an empty quadrant":
         discard
 
