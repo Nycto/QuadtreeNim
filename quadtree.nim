@@ -2,7 +2,7 @@
 ## A Quadtree implementation
 ##
 
-import math, ropes, strutils
+import math, ropes, strutils, optional_t
 
 type
     BoundingBox* = tuple[top, left, width, height: int]
@@ -44,6 +44,7 @@ type
         root: Node[E]
 
 
+
 proc ceilPow2( value: int ): int =
     ## Rounds up to the closest power of 2
     result = 1
@@ -52,13 +53,13 @@ proc ceilPow2( value: int ): int =
 
 
 
-proc newNode[E]( top, left, halfSize: int, elem: E ): Node[E] {.inline.} =
-    ## Creates a node
-    return Node[E]( top: top, left: left, halfSize: halfSize, elems: @[ elem ] )
-
 proc isLeaf[E]( node: Node[E] ): bool {.inline.} =
     ## Whether a node is a leaf in the tree
     node.elems != nil
+
+proc fullSize[E]( node: Node[E] ): int {.inline.} =
+    ## The full width of a node
+    2 * node.halfSize
 
 proc quadrantBox[E]( node: Node[E], quad: Quadrant ): BoundingBox {.inline.} =
     ## Returns the bounding box for a quadrant
@@ -69,6 +70,13 @@ proc quadrantBox[E]( node: Node[E], quad: Quadrant ): BoundingBox {.inline.} =
     of southeast: (node.top + size, node.left + size, size, size)
     of southwest: (node.top + size, node.left, size, size)
 
+proc fullyContains[E]( node: Node[E], quad: BoundingBox ): bool {.inline.} =
+    ## Returns whether the given node fully contains the given bounding box
+    if quad.left < node.left: return false
+    if quad.left + quad.width > node.left + node.fullSize: return false
+    if quad.top < node.top: return false
+    if quad.top + quad.height > node.top + node.fullSize: return false
+    return true
 
 
 proc newQuadtree*[E: Quadable](
@@ -76,7 +84,6 @@ proc newQuadtree*[E: Quadable](
 ): Quadtree[E] =
     ## Creates a new quadtree
     Quadtree[E]( maxInQuadrant: maxInQuadrant, root: nil )
-
 
 proc `$`[E]( node: Node[E], accum: var Rope ) =
     ## Convert a node to a string and add it to a Rope
@@ -95,12 +102,32 @@ proc `$`[E]( node: Node[E], accum: var Rope ) =
         `$`[E](node.quad[southwest], accum)
         accum.add(")")
 
+proc `$`*[E: Quadable]( node: Node[E] ): string =
+    ## Convert a Quadtree node to a string
+    var accum = rope("Node(")
+    `$`[E](node, accum)
+    accum.add(")")
+    return $accum
+
 proc `$`*[E: Quadable]( tree: Quadtree[E] ): string =
     ## Convert a Quadtree to a string
     var accum = rope("Quadtree(")
     `$`[E](tree.root, accum)
     accum.add(")")
     return $accum
+
+proc bounds*[E: Quadable]( tree: Quadtree[E] ): Option[BoundingBox] =
+    ## Returns the overall bounding box for a tree. This will be 'none' if
+    ## this tree doesn't have any content
+    if tree.root == nil:
+        return None[BoundingBox]()
+    else:
+        return Some[BoundingBox]((
+            top: tree.root.top,
+            left: tree.root.left,
+            width: tree.root.fullSize,
+            height: tree.root.fullSize
+        ))
 
 
 
@@ -114,8 +141,10 @@ proc insertIntoQuadrant[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
         let box = node.quadrantBox(quadrant)
         if box.contains(elem):
             if node.quad[quadrant] == nil:
-                node.quad[quadrant] = newNode[E](
-                    box.top, box.left, int(box.width / 2), elem)
+                node.quad[quadrant] = Node[E](
+                    top: box.top, left: box.left,
+                    halfSize: int(box.width / 2),
+                    elems: @[ elem ])
             else:
                 tree.insert(node.quad[quadrant], elem)
             true
@@ -167,21 +196,41 @@ proc insert[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
     else:
         tree.insertIntoQuadrant(node, elem)
 
-proc createRoot[E]( tree: var Quadtree[E], elem: E ) {.inline.} =
-    ## Creates a root node when adding to an empty tree
-    let box = elem.boundingBox
-    tree.root = newNode[E](
-        box.top - 1, box.left - 1,
-        ceilPow2( max(box.width, box.height, 2) * 2 ),
-        elem
-    )
+proc expand[E: Quadable]( tree: var Quadtree[E] ) {.inline.} =
+    ## Expands the bounding box of the tree in all directions
+
+    # Expand towards the upper left
+    let inner = Node[E](
+        top: tree.root.top - tree.root.fullSize,
+        left: tree.root.left - tree.root.fullSize,
+        halfSize: tree.root.fullSize,
+        elems: nil)
+    inner.quad[southeast] = tree.root
+
+    # Expand towards the lower right
+    tree.root = Node[E](
+        top: inner.top,
+        left: inner.left,
+        halfSize: inner.fullSize,
+        elems: nil)
+    inner.quad[northwest] = inner
 
 proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
     ## Adds a new element to a quadtree
+    let box = elem.boundingBox
 
+    # Creates a root node when adding to an empty tree
     if tree.root == nil:
-        createRoot(tree, elem)
+        tree.root = Node[E](
+            top: box.top - 1, left: box.left - 1,
+            halfSize: ceilPow2( max(box.width, box.height, 2) * 2 ),
+            elems: @[ elem ])
+
     else:
+        # Expand the root until it fits this element
+        while not tree.root.fullyContains(box):
+            expand(tree)
+
         tree.insert(tree.root, elem)
 
 
