@@ -6,6 +6,11 @@ You can find a reasonable introduction here:
 
 http://gamedevelopment.tutsplus.com/tutorials/make-your-game-pop-with-particle-effects-and-quadtrees--gamedev-2138
 
+API Docs
+--------
+
+http://nycto.github.io/QuadtreeNim/quadtree.html
+
 A Small Example
 ---------------
 
