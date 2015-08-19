@@ -2,7 +2,7 @@
 ## A Quadtree implementation
 ##
 
-import math, ropes, strutils, optional_t
+import math, ropes, strutils, optional_t, sequtils
 
 type
     BoundingBox* = tuple[top, left, width, height: int]
@@ -12,6 +12,7 @@ type
         ## An element that can be stored in a quadtree
         boundingBox(q) is BoundingBox
         contains(BoundingBox, q) is bool
+        `==`(q, q) is bool
 
     Half {.pure.} = enum ## \
         ## Represents half of a node; north vs south, east vs west
@@ -283,4 +284,26 @@ proc fetch*[E: Quadable]( tree: Quadtree[E], x, y: int ): seq[E] =
     return fetch(tree.root, x, y)
 
 
+proc delete[E]( node: var Node[E], elem: E ): bool =
+    ## Deletes an element from this node. Returns true if this node is left
+    ## empty because of the delete
+    if node.isLeaf:
+        keepIf(node.elems, proc(vs: E): bool = not(elem == vs))
+        return node.elems.len == 0
+    else:
+        var emptyQuadrants = 0
+        for quad in quadrants():
+            if node.quad[quad] == nil:
+                inc(emptyQuadrants)
+            elif node.quadrantBox(quad).contains(elem):
+                if node.quad[quad].delete(elem):
+                    node.quad[quad] = nil
+                    inc(emptyQuadrants)
+        return emptyQuadrants == 4
+
+proc delete*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
+    ## Removes the given element from this quadtree
+    if tree.root != nil:
+        if tree.root.delete(elem):
+            tree.root = nil
 

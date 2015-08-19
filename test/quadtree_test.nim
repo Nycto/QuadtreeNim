@@ -166,3 +166,16 @@ suite "Quadtrees should":
         expect(AssertionError):
             tree.insert( (x: 1, y: 1, width: -3, height: -3) )
 
+    test "Delete elements from a tree":
+        var tree = newQuadtree[Box](maxInQuadrant = 1)
+        tree.insert( (x: 1, y: 1, width: 3, height: 3) )
+        tree.insert( (x: 1, y: 1, width: 3, height: 3) )
+        tree.insert( (x: 9, y: 9, width: 3, height: 3) )
+
+        tree.delete( (x: 1, y: 1, width: 3, height: 3) )
+        require(tree.fetch(2, 2) == @[])
+        require(tree.fetch(9, 9) == @[ (x: 9, y: 9, width: 3, height: 3) ])
+
+        tree.delete( (x: 9, y: 9, width: 3, height: 3) )
+        require(tree.fetch(9, 9) == @[])
+
