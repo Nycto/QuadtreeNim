@@ -106,13 +106,6 @@ proc `$`[E]( node: Node[E], accum: var Rope ) =
         `$`[E](node.quad[southwest], accum)
         accum.add(")")
 
-proc `$`*[E: Quadable]( node: Node[E] ): string =
-    ## Convert a Quadtree node to a string
-    var accum = rope("Node(")
-    `$`[E](node, accum)
-    accum.add(")")
-    return $accum
-
 proc `$`*[E: Quadable]( tree: Quadtree[E] ): string =
     ## Convert a Quadtree to a string
     var accum = rope("Quadtree(")
