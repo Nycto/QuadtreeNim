@@ -52,6 +52,13 @@ proc ceilPow2( value: int ): int =
         result = result shl 1
 
 
+iterator quadrants(): Quadrant =
+    ## Yields each of the 4 quadrants
+    yield northwest
+    yield northeast
+    yield southeast
+    yield southwest
+
 
 proc isLeaf[E]( node: Node[E] ): bool {.inline.} =
     ## Whether a node is a leaf in the tree
@@ -96,15 +103,15 @@ proc `$`[E]( node: Node[E], accum: var Rope ) =
     elif node.isLeaf:
         accum.add($(node.elems))
     else:
-        accum.add("nw: (")
-        `$`[E](node.quad[northwest], accum)
-        accum.add("), ne: (")
-        `$`[E](node.quad[northeast], accum)
-        accum.add("), se: (")
-        `$`[E](node.quad[southeast], accum)
-        accum.add("), sw: (")
-        `$`[E](node.quad[southwest], accum)
-        accum.add(")")
+        var first = true
+        for quad in quadrants():
+            if not first:
+                accum.add(", ")
+            first = false
+            accum.add($quad)
+            accum.add("(")
+            `$`[E](node.quad[quad], accum)
+            accum.add(")")
 
 proc `$`*[E: Quadable]( tree: Quadtree[E] ): string =
     ## Convert a Quadtree to a string
@@ -134,26 +141,20 @@ proc insert[E](tree: var Quadtree[E], node: var Node[E], elem: E)
 proc insertIntoQuadrant[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
     ## Inserts a node into the quadrants of the given node
 
-    template addTo( quadrant: Quadrant ): bool {.immediate.} =
-        let box = node.quadrantBox(quadrant)
+    var added = false
+    for quad in quadrants():
+        let box = node.quadrantBox(quad)
         if box.contains(elem):
-            if node.quad[quadrant] == nil:
-                node.quad[quadrant] = Node[E](
+            if node.quad[quad] == nil:
+                node.quad[quad] = Node[E](
                     top: box.top, left: box.left,
                     halfSize: int(box.width / 2),
                     elems: @[ elem ])
             else:
-                tree.insert(node.quad[quadrant], elem)
-            true
-        else:
-            false
+                tree.insert(node.quad[quad], elem)
+            added = true
 
-    let addedNW = addTo(northwest)
-    let addedNE = addTo(northeast)
-    let addedSE = addTo(southeast)
-    let addedSW = addTo(southwest)
-
-    if not (addedNW or addedNE or addedSE or addedSW):
+    if not added:
         raise newException( AssertionError,
             ("Element ($#) was not added to any quadrant. " &
             "Tried adding to $#, $#, $# and $#") % [
