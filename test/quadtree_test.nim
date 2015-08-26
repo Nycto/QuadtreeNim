@@ -22,9 +22,11 @@ proc contains*( bound: BoundingBox, elem: InvalidContains ): bool = false
 
 suite "Quadtrees should":
 
+    let empty: seq[Box] = @[]
+
     test "Return an empty seq when fetching from an empty quadtree":
         let tree = newQuadtree[Box]()
-        require( tree.fetch(0, 0) == @[] )
+        require( tree.fetch(0, 0) == empty )
 
     test "Add and fetch a single bounding box":
         var tree = newQuadtree[Box]()
@@ -128,28 +130,28 @@ suite "Quadtrees should":
         tree.insert( (x: 1, y: 1, width: 3, height: 3) )
         tree.insert( (x: 2, y: 2, width: 2, height: 2) )
         require(tree.bounds.get == (top: 0, left: 0, width: 16, height: 16))
-        require(tree.fetch(9, 0) == @[])
-        require(tree.fetch(10, 10) == @[])
-        require(tree.fetch(0, 11) == @[])
+        require(tree.fetch(9, 0) == empty)
+        require(tree.fetch(10, 10) == empty)
+        require(tree.fetch(0, 11) == empty)
 
     test "Fetching from outside a tree with a single node tree":
         var tree = newQuadtree[Box](maxInQuadrant = 1)
         tree.insert( (x: 1, y: 1, width: 3, height: 3) )
         require(tree.bounds.get == (top: 0, left: 0, width: 16, height: 16))
-        require(tree.fetch(-5, 5) == @[])
-        require(tree.fetch(5, -5) == @[])
-        require(tree.fetch(5, 20) == @[])
-        require(tree.fetch(20, 5) == @[])
+        require(tree.fetch(-5, 5) == empty)
+        require(tree.fetch(5, -5) == empty)
+        require(tree.fetch(5, 20) == empty)
+        require(tree.fetch(20, 5) == empty)
 
     test "Fetching from outside a tree with a multi-node tree":
         var tree = newQuadtree[Box](maxInQuadrant = 1)
         tree.insert( (x: 1, y: 1, width: 3, height: 3) )
         tree.insert( (x: 9, y: 9, width: 3, height: 3) )
         require(tree.bounds.get == (top: 0, left: 0, width: 16, height: 16))
-        require(tree.fetch(-5, 5) == @[])
-        require(tree.fetch(5, -5) == @[])
-        require(tree.fetch(5, 20) == @[])
-        require(tree.fetch(20, 5) == @[])
+        require(tree.fetch(-5, 5) == empty)
+        require(tree.fetch(5, -5) == empty)
+        require(tree.fetch(5, 20) == empty)
+        require(tree.fetch(20, 5) == empty)
 
     test "Throw an error when an element isnt added to any quadrant":
         var tree = newQuadtree[InvalidContains](maxInQuadrant = 1)
@@ -173,9 +175,9 @@ suite "Quadtrees should":
         tree.insert( (x: 9, y: 9, width: 3, height: 3) )
 
         tree.delete( (x: 1, y: 1, width: 3, height: 3) )
-        require(tree.fetch(2, 2) == @[])
+        require(tree.fetch(2, 2) == empty)
         require(tree.fetch(9, 9) == @[ (x: 9, y: 9, width: 3, height: 3) ])
 
         tree.delete( (x: 9, y: 9, width: 3, height: 3) )
-        require(tree.fetch(9, 9) == @[])
+        require(tree.fetch(9, 9) == empty)
 
