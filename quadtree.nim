@@ -2,7 +2,7 @@
 ## A Quadtree implementation
 ##
 
-import math, ropes, strutils, optional_t, sequtils
+import math, ropes, strutils, options, sequtils
 
 type
     BoundingBox* = tuple[top, left, width, height: int]
@@ -125,9 +125,9 @@ proc bounds*[E: Quadable]( tree: Quadtree[E] ): Option[BoundingBox] =
     ## Returns the overall bounding box for a tree. This will be 'none' if
     ## this tree doesn't have any content
     if tree.root == nil:
-        return None[BoundingBox]()
+        return none(BoundingBox)
     else:
-        return Some[BoundingBox]((
+        return some[BoundingBox]((
             top: tree.root.top,
             left: tree.root.left,
             width: tree.root.fullSize,

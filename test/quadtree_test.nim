@@ -1,4 +1,4 @@
-import unittest, quadtree, optional_t
+import unittest, quadtree, options
 
 
 type
@@ -60,7 +60,7 @@ suite "Quadtrees should":
 
     test "Return the bouding box of a tree":
         var tree = newQuadtree[Box]()
-        require( tree.bounds == None[BoundingBox]() )
+        require( tree.bounds == none(BoundingBox) )
         tree.insert( (x: 10, y: 2, width: 2, height: 2) )
         require(tree.bounds.get == (top: 1, left: 9, width: 8, height: 8))
 
