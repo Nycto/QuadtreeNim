@@ -1,6 +1,6 @@
 [Package]
 name          = "quadtree"
-version       = "0.1.0"
+version       = "0.2.0"
 author        = "Nycto"
 description   = "A Quadtree Implementation"
 license       = "MIT"
