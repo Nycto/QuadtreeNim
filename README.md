@@ -25,12 +25,12 @@ proc boundingBox*( b: Box ): BoundingBox =
     ## entirety of an element
     return ( top: b.y, left: b.x, width: b.size, height: b.size )
 
-proc contains*( bound: BoundingBox, elem: Box ): bool =
+proc contains*( bound: Square, elem: Box ): bool =
     ## Required by the Quadtree library; Returns whether the given bounding
     ## box contains part of the given element
-    if bound.left + bound.width < elem.x: return false
+    if bound.left + bound.size < elem.x: return false
     if bound.left > elem.x + elem.size: return false
-    if bound.top + bound.height < elem.y: return false
+    if bound.top + bound.size < elem.y: return false
     if bound.top > elem.y + elem.size: return false
     return true
 
