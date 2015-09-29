@@ -18,11 +18,26 @@ type
     Square* = tuple[y, x, size: int]
         ## A square on a grid
 
-    Quadable* = concept q
+
+    QuadableContains* = concept q
+        ## An element that can be stored in a quadtree
+        contains(Square, q) is bool
+        q.y is int
+        q.x is int
+        q.width is int
+        q.height is int
+        `==`(q, q) is bool
+
+    QuadableFull* = concept q
         ## An element that can be stored in a quadtree
         boundingBox(q) is Bounds
         contains(Square, q) is bool
         `==`(q, q) is bool
+
+    Quadable* = QuadableContains | QuadableFull
+        ## An element that can be stored in a quadtree. It can take multiple
+        ## forms, depending on the level of control desired
+
 
     Half {.pure.} = enum ## \
         ## Represents half of a node; north vs south, east vs west
@@ -228,9 +243,18 @@ proc expand[E]( tree: var Quadtree[E] ) {.inline.} =
         elems: nil)
     inner.quad[northwest] = inner
 
+
+template getBoundingBox( elem: Quadable ): Bounds =
+    ## Returns the bounding box for an element
+    when type(elem) is QuadableContains:
+        elem
+    else:
+        elem.boundingBox
+
+
 proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
     ## Adds a new element to a quadtree
-    let box = elem.boundingBox
+    let box = getBoundingBox(elem)
 
     assert(box.width >= 0 and box.height >= 0)
 
