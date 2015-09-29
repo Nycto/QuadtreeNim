@@ -7,15 +7,15 @@ import math, ropes, strutils, options, sequtils
 type
     Bounds* = concept b
         ## The position and dimensions of a bounding box
-        b.top is int
-        b.left is int
+        b.y is int
+        b.x is int
         b.width is int
         b.height is int
 
-    BoundingBox* = tuple[top, left, width, height: int]
+    BoundingBox* = tuple[y, x, width, height: int]
         ## A concrete `Bounds` implementation
 
-    Square* = tuple[top, left, size: int]
+    Square* = tuple[y, x, size: int]
         ## A square on a grid
 
     Quadable* = concept q
@@ -34,13 +34,13 @@ type
 
     Node[E] = ref object
         ## A node within the quadtree
-        ## * `top` and `left` are the coordinates for the box
+        ## * `y` and `x` are the coordinates for the box
         ## * `halfSize` is half the length of any side of this Node
         ## * `elems` is a list of elements in this node. When this is `nil`, the
         ##   node is flagged as a parent. Yes, this is probably an abuse of
         ##   `nil`, but it isn't exposed outside of this library.
         ## * `quad` is a list of sub-quadrants when this node is a parent
-        top, left: int
+        y, x: int
         halfSize: int
         elems: seq[E]
         quad: array[northwest..southwest, Node[E]]
@@ -87,20 +87,20 @@ proc quadrantBox[E]( node: Node[E], quad: Quadrant ): Square {.inline.} =
     ## Returns the bounding box for a quadrant
     let size = node.halfSize
     case quad
-    of northwest: (node.top, node.left, size)
-    of northeast: (node.top, node.left + size, size)
-    of southeast: (node.top + size, node.left + size, size)
-    of southwest: (node.top + size, node.left, size)
+    of northwest: (node.y, node.x, size)
+    of northeast: (node.y, node.x + size, size)
+    of southeast: (node.y + size, node.x + size, size)
+    of southwest: (node.y + size, node.x, size)
 
 template fullyContains[E]( node: Node[E], quad: Bounds ): bool =
     ## Returns whether the given node fully contains the given bounding box
-    if quad.left < node.left:
+    if quad.x < node.x:
         false
-    elif quad.left + quad.width > node.left + fullSize(node):
+    elif quad.x + quad.width > node.x + fullSize(node):
         false
-    elif quad.top < node.top:
+    elif quad.y < node.y:
         false
-    elif quad.top + quad.height > node.top + fullSize(node):
+    elif quad.y + quad.height > node.y + fullSize(node):
         false
     else:
         true
@@ -143,8 +143,8 @@ proc bounds*[E: Quadable]( tree: Quadtree[E] ): Option[Square] =
         return none(Square)
     else:
         return some[Square]((
-            top: tree.root.top,
-            left: tree.root.left,
+            y: tree.root.y,
+            x: tree.root.x,
             size: tree.root.fullSize
         ))
 
@@ -162,7 +162,7 @@ proc insertIntoQuadrant[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
         if contains(box, elem):
             if node.quad[quad] == nil:
                 node.quad[quad] = Node[E](
-                    top: box.top, left: box.left,
+                    y: box.y, x: box.x,
                     halfSize: int(box.size / 2),
                     elems: @[ elem ])
             else:
@@ -212,18 +212,18 @@ proc insert[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
 proc expand[E]( tree: var Quadtree[E] ) {.inline.} =
     ## Expands the bounding box of the tree in all directions
 
-    # Expand towards the upper left
+    # Expand towards the upper x
     let inner = Node[E](
-        top: tree.root.top - tree.root.fullSize,
-        left: tree.root.left - tree.root.fullSize,
+        y: tree.root.y - tree.root.fullSize,
+        x: tree.root.x - tree.root.fullSize,
         halfSize: tree.root.fullSize,
         elems: nil)
     inner.quad[southeast] = tree.root
 
     # Expand towards the lower right
     tree.root = Node[E](
-        top: inner.top,
-        left: inner.left,
+        y: inner.y,
+        x: inner.x,
         halfSize: inner.fullSize,
         elems: nil)
     inner.quad[northwest] = inner
@@ -237,7 +237,7 @@ proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
     # Creates a root node when adding to an empty tree
     if tree.root == nil:
         tree.root = Node[E](
-            top: box.top - 1, left: box.left - 1,
+            y: box.y - 1, x: box.x - 1,
             halfSize: ceilPow2( max(box.width, box.height, 2) * 2 ),
             elems: @[ elem ])
 
@@ -283,8 +283,8 @@ proc fetch[E]( node: Node[E], x, y: int ): seq[E] =
     if node == nil:
         return @[]
 
-    let horiz = getHalf(node.left, node.halfSize, x)
-    let vert = getHalf(node.top, node.halfSize, y)
+    let horiz = getHalf(node.x, node.halfSize, x)
+    let vert = getHalf(node.y, node.halfSize, y)
 
     if horiz == Half.neither or vert == Half.neither:
         return @[]
@@ -299,7 +299,7 @@ proc fetch*[E: Quadable]( tree: Quadtree[E], x, y: int ): seq[E] =
 
 
 proc delete[E]( node: var Node[E], elem: E ): bool =
-    ## Deletes an element from this node. Returns true if this node is left
+    ## Deletes an element from this node. Returns true if this node is x
     ## empty because of the delete
     if node.isLeaf:
         keepIf(node.elems, proc(vs: E): bool = not(elem == vs))

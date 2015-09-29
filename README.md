@@ -23,15 +23,15 @@ type Box = tuple[x, y, size: int]
 proc boundingBox*( b: Box ): BoundingBox =
     ## Required by the Quadtree library; Returns a box that contains the
     ## entirety of an element
-    return ( top: b.y, left: b.x, width: b.size, height: b.size )
+    return ( y: b.y, x: b.x, width: b.size, height: b.size )
 
 proc contains*( bound: Square, elem: Box ): bool =
     ## Required by the Quadtree library; Returns whether the given bounding
     ## box contains part of the given element
-    if bound.left + bound.size < elem.x: return false
-    if bound.left > elem.x + elem.size: return false
-    if bound.top + bound.size < elem.y: return false
-    if bound.top > elem.y + elem.size: return false
+    if bound.x + bound.size < elem.x: return false
+    if bound.x > elem.x + elem.size: return false
+    if bound.y + bound.size < elem.y: return false
+    if bound.y > elem.y + elem.size: return false
     return true
 
 var tree = newQuadtree[Box]()
