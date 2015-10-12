@@ -12,12 +12,17 @@ type
         b.width is int
         b.height is int
 
-    BoundingBox* = tuple[y, x, width, height: int]
-        ## A concrete `Bounds` implementation
-
     Square* = tuple[y, x, size: int]
         ## A square on a grid
 
+
+    QuadableBare* = concept q
+        ## An element that can be stored in a quadtree
+        q.y is int
+        q.x is int
+        q.width is int
+        q.height is int
+        `==`(q, q) is bool
 
     QuadableContains* = concept q
         ## An element that can be stored in a quadtree
@@ -28,13 +33,18 @@ type
         q.height is int
         `==`(q, q) is bool
 
+    QuadableBounds* = concept q
+        ## An element that can be stored in a quadtree
+        boundingBox(q) is Bounds
+        `==`(q, q) is bool
+
     QuadableFull* = concept q
         ## An element that can be stored in a quadtree
         boundingBox(q) is Bounds
         contains(Square, q) is bool
         `==`(q, q) is bool
 
-    Quadable* = QuadableContains | QuadableFull
+    Quadable* = QuadableBare | QuadableBounds | QuadableContains | QuadableFull
         ## An element that can be stored in a quadtree. It can take multiple
         ## forms, depending on the level of control desired
 
@@ -164,6 +174,28 @@ proc bounds*[E: Quadable]( tree: Quadtree[E] ): Option[Square] =
         ))
 
 
+template getBoundingBox( elem: Quadable ): Bounds =
+    ## Returns the bounding box for an element
+    when type(elem) is QuadableFull or type(elem) is QuadableBounds:
+        elem.boundingBox
+    else:
+        elem
+
+proc quadContainsBounds( box: Square, elem: Bounds ): bool =
+    ## Checks whether a quadrant contains the given bounds
+    if box.x + box.size < elem.x: return false
+    if box.x > elem.x + elem.width: return false
+    if box.y + box.size < elem.y: return false
+    if box.y > elem.y + elem.height: return false
+    return true
+
+template quadContains( box: Square, elem: Quadable ): bool =
+    ## Tests whether a quadrant contains an element
+    when type(elem) is QuadableFull or type(elem) is QuadableContains:
+        contains(box, elem)
+    else:
+        quadContainsBounds(box, getBoundingBox(elem))
+
 
 # Forward declaration so this can be referenced by 'insertIntoQuadrant'
 proc insert[E](tree: var Quadtree[E], node: var Node[E], elem: E)
@@ -174,7 +206,7 @@ proc insertIntoQuadrant[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
     var added = false
     for quad in quadrants():
         let box = node.quadrantBox(quad)
-        if contains(box, elem):
+        if quadContains(box, elem):
             if node.quad[quad] == nil:
                 node.quad[quad] = Node[E](
                     y: box.y, x: box.x,
@@ -243,13 +275,6 @@ proc expand[E]( tree: var Quadtree[E] ) {.inline.} =
         elems: nil)
     inner.quad[northwest] = inner
 
-
-template getBoundingBox( elem: Quadable ): Bounds =
-    ## Returns the bounding box for an element
-    when type(elem) is QuadableContains:
-        elem
-    else:
-        elem.boundingBox
 
 
 proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
@@ -333,7 +358,7 @@ proc delete[E]( node: var Node[E], elem: E ): bool =
         for quad in quadrants():
             if node.quad[quad] == nil:
                 inc(emptyQuadrants)
-            elif node.quadrantBox(quad).contains(elem):
+            elif quadContains(node.quadrantBox(quad), elem):
                 if node.quad[quad].delete(elem):
                     node.quad[quad] = nil
                     inc(emptyQuadrants)

@@ -17,28 +17,14 @@ A Small Example
 ```nimrod
 import quadtree
 
-type Box = tuple[x, y, size: int]
+type Box = tuple[x, y, width, height: int]
     ## This represents whatever type you want to store in the tree
-
-proc boundingBox*( b: Box ): BoundingBox =
-    ## Required by the Quadtree library; Returns a box that contains the
-    ## entirety of an element
-    return ( y: b.y, x: b.x, width: b.size, height: b.size )
-
-proc contains*( bound: Square, elem: Box ): bool =
-    ## Required by the Quadtree library; Returns whether the given bounding
-    ## box contains part of the given element
-    if bound.x + bound.size < elem.x: return false
-    if bound.x > elem.x + elem.size: return false
-    if bound.y + bound.size < elem.y: return false
-    if bound.y > elem.y + elem.size: return false
-    return true
 
 var tree = newQuadtree[Box]()
 
-tree.insert( (x: 1, y: 1, size: 5) )
-tree.insert( (x: 2, y: 3, size: 5) )
-tree.insert( (x: 19, y: 4, size: 3) )
+tree.insert( (x: 1, y: 1, width: 5, height: 4) )
+tree.insert( (x: 2, y: 3, width: 5, height: 5) )
+tree.insert( (x: 19, y: 4, width: 3, height: 1) )
 
 # Grab all the elements that are near (2, 2)
 echo tree.fetch(2, 2)
