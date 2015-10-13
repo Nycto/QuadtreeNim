@@ -53,7 +53,7 @@ body {
   font-weight: 400;
   font-size: 14px;
   line-height: 20px;
-  color: #2d2d2d;
+  color: #666;
   background-color: rgba(252, 248, 244, 0.75); }
 
 /* Skeleton grid */
@@ -1162,13 +1162,40 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
 <li>
   <a class="reference reference-toplevel" href="#7" id="57">Types</a>
   <ul class="simple simple-toc-section">
-      <li><a class="reference" href="#BoundingBox"
-    title="BoundingBox* = tuple[top, left, width, height: int]"><wbr />Bounding<wbr />Box</a></li>
+      <li><a class="reference" href="#Bounds"
+    title="Bounds* = concept b
+    b.y is int
+    b.x is int
+    b.width is int
+    b.height is int"><wbr />Bounds</a></li>
+  <li><a class="reference" href="#Square"
+    title="Square* = tuple[y, x, size: int]"><wbr />Square</a></li>
+  <li><a class="reference" href="#QuadableBare"
+    title="QuadableBare* = concept q
+    q.y is int
+    q.x is int
+    q.width is int
+    q.height is int
+    `==`(q, q) is bool"><wbr />Quadable<wbr />Bare</a></li>
+  <li><a class="reference" href="#QuadableContains"
+    title="QuadableContains* = concept q
+    contains(Square, q) is bool
+    q.y is int
+    q.x is int
+    q.width is int
+    q.height is int
+    `==`(q, q) is bool"><wbr />Quadable<wbr />Contains</a></li>
+  <li><a class="reference" href="#QuadableBounds"
+    title="QuadableBounds* = concept q
+    boundingBox(q) is Bounds
+    `==`(q, q) is bool"><wbr />Quadable<wbr />Bounds</a></li>
+  <li><a class="reference" href="#QuadableFull"
+    title="QuadableFull* = concept q
+    boundingBox(q) is Bounds
+    contains(Square, q) is bool
+    `==`(q, q) is bool"><wbr />Quadable<wbr />Full</a></li>
   <li><a class="reference" href="#Quadable"
-    title="Quadable* = concept q
-    boundingBox(q) is BoundingBox
-    contains(BoundingBox, q) is bool
-    `==`(q, q) is bool"><wbr />Quadable</a></li>
+    title="Quadable* = QuadableBare | QuadableBounds | QuadableContains | QuadableFull"><wbr />Quadable</a></li>
 
   </ul>
 </li>
@@ -1180,7 +1207,7 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   <li><a class="reference" href="#$,Quadtree[E]"
     title="`$`*[E: Quadable](tree: Quadtree[E]): string">`<wbr />$`</a></li>
   <li><a class="reference" href="#bounds,Quadtree[E]"
-    title="bounds*[E: Quadable](tree: Quadtree[E]): Option[BoundingBox]"><wbr />bounds</a></li>
+    title="bounds*[E: Quadable](tree: Quadtree[E]): Option[Square]"><wbr />bounds</a></li>
   <li><a class="reference" href="#insert,Quadtree[E],E"
     title="insert*[E: Quadable](tree: var Quadtree[E]; elem: E)"><wbr />insert</a></li>
   <li><a class="reference" href="#fetch,Quadtree[E],int,int"
@@ -1200,22 +1227,64 @@ dt pre > span.Operator ~ span.Identifier, dt pre > span.Operator ~ span.Operator
   <div class="section" id="6">
 <h1><a class="toc-backref" href="#6">Imports</a></h1>
 <dl class="item">
-<a class="reference external" href="math.html">math</a>, <a class="reference external" href="ropes.html">ropes</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="optional_t.html">optional_t</a>, <a class="reference external" href="sequtils.html">sequtils</a>
+<a class="reference external" href="math.html">math</a>, <a class="reference external" href="ropes.html">ropes</a>, <a class="reference external" href="strutils.html">strutils</a>, <a class="reference external" href="options.html">options</a>, <a class="reference external" href="sequtils.html">sequtils</a>
 </dl></div>
 <div class="section" id="7">
 <h1><a class="toc-backref" href="#7">Types</a></h1>
 <dl class="item">
-<dt id="BoundingBox"><a name="BoundingBox"></a><pre><span class="Identifier">BoundingBox</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">tuple</span><span class="Other">[</span><span class="Identifier">top</span><span class="Other">,</span> <span class="Identifier">left</span><span class="Other">,</span> <span class="Identifier">width</span><span class="Other">,</span> <span class="Identifier">height</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">]</span></pre></dt>
+<dt id="Bounds"><a name="Bounds"></a><pre><span class="Identifier">Bounds</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">concept</span> <span class="Identifier">b</span>
+    <span class="Identifier">b</span><span class="Other">.</span><span class="Identifier">y</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">b</span><span class="Other">.</span><span class="Identifier">x</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">b</span><span class="Other">.</span><span class="Identifier">width</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">b</span><span class="Other">.</span><span class="Identifier">height</span> <span class="Keyword">is</span> <span class="Identifier">int</span></pre></dt>
 <dd>
 The position and dimensions of a bounding box
 
 </dd>
-<dt id="Quadable"><a name="Quadable"></a><pre><span class="Identifier">Quadable</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">concept</span> <span class="Identifier">q</span>
-    <span class="Identifier">boundingBox</span><span class="Other">(</span><span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">BoundingBox</span>
-    <span class="Identifier">contains</span><span class="Other">(</span><span class="Identifier">BoundingBox</span><span class="Other">,</span> <span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">bool</span>
+<dt id="Square"><a name="Square"></a><pre><span class="Identifier">Square</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">tuple</span><span class="Other">[</span><span class="Identifier">y</span><span class="Other">,</span> <span class="Identifier">x</span><span class="Other">,</span> <span class="Identifier">size</span><span class="Other">:</span> <span class="Identifier">int</span><span class="Other">]</span></pre></dt>
+<dd>
+A square on a grid
+
+</dd>
+<dt id="QuadableBare"><a name="QuadableBare"></a><pre><span class="Identifier">QuadableBare</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">concept</span> <span class="Identifier">q</span>
+    <span class="Identifier">q</span><span class="Other">.</span><span class="Identifier">y</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">q</span><span class="Other">.</span><span class="Identifier">x</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">q</span><span class="Other">.</span><span class="Identifier">width</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">q</span><span class="Other">.</span><span class="Identifier">height</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
     <span class="Other">`</span><span class="Operator">==</span><span class="Other">`</span><span class="Other">(</span><span class="Identifier">q</span><span class="Other">,</span> <span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">bool</span></pre></dt>
 <dd>
 An element that can be stored in a quadtree
+
+</dd>
+<dt id="QuadableContains"><a name="QuadableContains"></a><pre><span class="Identifier">QuadableContains</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">concept</span> <span class="Identifier">q</span>
+    <span class="Identifier">contains</span><span class="Other">(</span><span class="Identifier">Square</span><span class="Other">,</span> <span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">bool</span>
+    <span class="Identifier">q</span><span class="Other">.</span><span class="Identifier">y</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">q</span><span class="Other">.</span><span class="Identifier">x</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">q</span><span class="Other">.</span><span class="Identifier">width</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Identifier">q</span><span class="Other">.</span><span class="Identifier">height</span> <span class="Keyword">is</span> <span class="Identifier">int</span>
+    <span class="Other">`</span><span class="Operator">==</span><span class="Other">`</span><span class="Other">(</span><span class="Identifier">q</span><span class="Other">,</span> <span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">bool</span></pre></dt>
+<dd>
+An element that can be stored in a quadtree
+
+</dd>
+<dt id="QuadableBounds"><a name="QuadableBounds"></a><pre><span class="Identifier">QuadableBounds</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">concept</span> <span class="Identifier">q</span>
+    <span class="Identifier">boundingBox</span><span class="Other">(</span><span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">Bounds</span>
+    <span class="Other">`</span><span class="Operator">==</span><span class="Other">`</span><span class="Other">(</span><span class="Identifier">q</span><span class="Other">,</span> <span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">bool</span></pre></dt>
+<dd>
+An element that can be stored in a quadtree
+
+</dd>
+<dt id="QuadableFull"><a name="QuadableFull"></a><pre><span class="Identifier">QuadableFull</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Keyword">concept</span> <span class="Identifier">q</span>
+    <span class="Identifier">boundingBox</span><span class="Other">(</span><span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">Bounds</span>
+    <span class="Identifier">contains</span><span class="Other">(</span><span class="Identifier">Square</span><span class="Other">,</span> <span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">bool</span>
+    <span class="Other">`</span><span class="Operator">==</span><span class="Other">`</span><span class="Other">(</span><span class="Identifier">q</span><span class="Other">,</span> <span class="Identifier">q</span><span class="Other">)</span> <span class="Keyword">is</span> <span class="Identifier">bool</span></pre></dt>
+<dd>
+An element that can be stored in a quadtree
+
+</dd>
+<dt id="Quadable"><a name="Quadable"></a><pre><span class="Identifier">Quadable</span><span class="Operator">*</span> <span class="Other">=</span> <span class="Identifier">QuadableBare</span> <span class="Operator">|</span> <span class="Identifier">QuadableBounds</span> <span class="Operator">|</span> <span class="Identifier">QuadableContains</span> <span class="Operator">|</span> <span class="Identifier">QuadableFull</span></pre></dt>
+<dd>
+An element that can be stored in a quadtree. It can take multiple forms, depending on the level of control desired
 
 </dd>
 
@@ -1233,7 +1302,7 @@ Creates a new quadtree
 Convert a Quadtree to a string
 
 </dd>
-<dt id="bounds"><a name="bounds,Quadtree[E]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">bounds</span><span class="Operator">*</span><span class="Other">[</span><span class="Identifier">E</span><span class="Other">:</span> <span class="Identifier">Quadable</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">tree</span><span class="Other">:</span> <span class="Identifier">Quadtree</span><span class="Other">[</span><span class="Identifier">E</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Option</span><span class="Other">[</span><span class="Identifier">BoundingBox</span><span class="Other">]</span></pre></dt>
+<dt id="bounds"><a name="bounds,Quadtree[E]"></a><pre><span class="Keyword">proc</span> <span class="Identifier">bounds</span><span class="Operator">*</span><span class="Other">[</span><span class="Identifier">E</span><span class="Other">:</span> <span class="Identifier">Quadable</span><span class="Other">]</span><span class="Other">(</span><span class="Identifier">tree</span><span class="Other">:</span> <span class="Identifier">Quadtree</span><span class="Other">[</span><span class="Identifier">E</span><span class="Other">]</span><span class="Other">)</span><span class="Other">:</span> <span class="Identifier">Option</span><span class="Other">[</span><span class="Identifier">Square</span><span class="Other">]</span></pre></dt>
 <dd>
 Returns the overall bounding box for a tree. This will be 'none' if this tree doesn't have any content
 
@@ -1263,7 +1332,7 @@ Removes the given element from this quadtree
       <div class="twelve-columns footer">
         <span class="nim-sprite"></span>
         <br>
-        <small>Made with Nim. Generated: 2015-08-23 14:05:09 UTC</small>
+        <small>Made with Nim. Generated: 2015-10-12 22:09:54 UTC</small>
       </div>
     </div>
   </div>
