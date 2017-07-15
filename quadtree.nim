@@ -287,7 +287,7 @@ proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
     if tree.root == nil:
         tree.root = Node[E](
             y: box.y - 1, x: box.x - 1,
-            halfSize: ceilPow2( max(box.width, box.height, 2) * 2 ),
+            halfSize: ceilPow2( max(max(box.width, box.height), 2) * 2 ),
             elems: @[ elem ])
 
     else:

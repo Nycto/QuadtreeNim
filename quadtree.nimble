@@ -1,9 +1,12 @@
-[Package]
-name          = "quadtree"
-version       = "0.3.0"
+# Package
+version       = "0.3.1"
 author        = "Nycto"
 description   = "A Quadtree Implementation"
 license       = "MIT"
+skipDirs      = @["test", ".build"]
 
-[Deps]
-Requires: "nim >= 0.13.0"
+# Deps
+requires "nim >= 0.13.0"
+
+exec "test -d .build/ExtraNimble || git clone https://github.com/Nycto/ExtraNimble.git .build/ExtraNimble"
+include ".build/ExtraNimble/extranimble.nim"
