@@ -12,41 +12,18 @@ type
         b.width is int
         b.height is int
 
+    BoundsProvider* = concept q
+        ## An element that can provide a bounding box
+        boundingBox(q) is Bounds
+
     Square* = tuple[y, x, size: int]
         ## A square on a grid
 
-
-    QuadableBare* = concept q
-        ## An element that can be stored in a quadtree
-        q.y is int
-        q.x is int
-        q.width is int
-        q.height is int
-        `==`(q, q) is bool
-
-    QuadableContains* = concept q
-        ## An element that can be stored in a quadtree
-        contains(Square, q) is bool
-        q.y is int
-        q.x is int
-        q.width is int
-        q.height is int
-        `==`(q, q) is bool
-
-    QuadableBounds* = concept q
-        ## An element that can be stored in a quadtree
-        boundingBox(q) is Bounds
-        `==`(q, q) is bool
-
-    QuadableFull* = concept q
-        ## An element that can be stored in a quadtree
-        boundingBox(q) is Bounds
-        contains(Square, q) is bool
-        `==`(q, q) is bool
-
-    Quadable* = QuadableBare | QuadableBounds | QuadableContains | QuadableFull
+    Quadable* = concept q
         ## An element that can be stored in a quadtree. It can take multiple
         ## forms, depending on the level of control desired
+        `==`(q, q) is bool
+        q is Bounds | BoundsProvider
 
 
     Half {.pure.} = enum ## \
@@ -81,7 +58,7 @@ type
 
 
 
-proc ceilPow2( value: int ): int =
+proc ceilPow2( value: int ): int {. inline .} =
     ## Rounds up to the closest power of 2
     result = 1
     while result < value:
@@ -176,10 +153,10 @@ proc bounds*[E: Quadable]( tree: Quadtree[E] ): Option[Square] =
 
 template getBoundingBox( elem: Quadable ): Bounds =
     ## Returns the bounding box for an element
-    when type(elem) is QuadableFull or type(elem) is QuadableBounds:
-        elem.boundingBox
-    else:
+    when type(elem) is Bounds:
         elem
+    else:
+        elem.boundingBox
 
 proc quadContainsBounds( box: Square, elem: Bounds ): bool =
     ## Checks whether a quadrant contains the given bounds
@@ -191,10 +168,7 @@ proc quadContainsBounds( box: Square, elem: Bounds ): bool =
 
 template quadContains( box: Square, elem: Quadable ): bool =
     ## Tests whether a quadrant contains an element
-    when type(elem) is QuadableFull or type(elem) is QuadableContains:
-        contains(box, elem)
-    else:
-        quadContainsBounds(box, getBoundingBox(elem))
+    quadContainsBounds(box, getBoundingBox(elem))
 
 
 # Forward declaration so this can be referenced by 'insertIntoQuadrant'
