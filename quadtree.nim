@@ -25,7 +25,6 @@ type
         `==`(q, q) is bool
         q is Bounds | BoundsProvider
 
-
     Half {.pure.} = enum ## \
         ## Represents half of a node; north vs south, east vs west
         low, high, neither
@@ -57,8 +56,7 @@ type
         root: Node[E]
 
 
-
-proc ceilPow2( value: int ): int {. inline .} =
+proc ceilPow2(value: int): int {. inline .} =
     ## Rounds up to the closest power of 2
     result = 1
     while result < value:
@@ -73,19 +71,19 @@ iterator quadrants(): Quadrant =
     yield southwest
 
 
-proc isLeaf[E]( node: Node[E] ): bool {.inline.} =
+proc isLeaf[E](node: Node[E]): bool {.inline.} =
     ## Whether a node is a leaf in the tree
     node.elems != nil
 
-proc fullSize[E]( node: Node[E] ): int {.inline.} =
+proc fullSize[E](node: Node[E]): int {.inline.} =
     ## The full width of a node
     2 * node.halfSize
 
-proc canSubdivide[E]( node: Node[E] ): bool {.inline.} =
+proc canSubdivide[E](node: Node[E]): bool {.inline.} =
     ## Returns whether a node can be subdivided further
     node.halfSize > 1
 
-proc quadrantBox[E]( node: Node[E], quad: Quadrant ): Square {.inline.} =
+proc quadrantBox[E](node: Node[E], quad: Quadrant): Square {.inline.} =
     ## Returns the bounding box for a quadrant
     let size = node.halfSize
     case quad
@@ -94,7 +92,7 @@ proc quadrantBox[E]( node: Node[E], quad: Quadrant ): Square {.inline.} =
     of southeast: (node.y + size, node.x + size, size)
     of southwest: (node.y + size, node.x, size)
 
-template fullyContains[E]( node: Node[E], quad: Bounds ): bool =
+template fullyContains[E](node: Node[E], quad: Bounds): bool =
     ## Returns whether the given node fully contains the given bounding box
     if quad.x < node.x:
         false
@@ -108,13 +106,11 @@ template fullyContains[E]( node: Node[E], quad: Bounds ): bool =
         true
 
 
-proc newQuadtree*[E: Quadable](
-    maxInQuadrant: int = 2,
-): Quadtree[E] =
+proc newQuadtree*[E: Quadable](maxInQuadrant: int = 2): Quadtree[E] =
     ## Creates a new quadtree
-    Quadtree[E]( maxInQuadrant: maxInQuadrant, root: nil )
+    Quadtree[E](maxInQuadrant: maxInQuadrant, root: nil)
 
-proc `$`[E]( node: Node[E], accum: var Rope ) =
+proc `$`[E](node: Node[E], accum: var Rope) =
     ## Convert a node to a string and add it to a Rope
     if node == nil:
         accum.add("empty")
@@ -131,34 +127,30 @@ proc `$`[E]( node: Node[E], accum: var Rope ) =
             `$`[E](node.quad[quad], accum)
             accum.add(")")
 
-proc `$`*[E: Quadable]( tree: Quadtree[E] ): string =
+proc `$`*[E: Quadable](tree: Quadtree[E]): string =
     ## Convert a Quadtree to a string
     var accum = rope("Quadtree(")
     `$`[E](tree.root, accum)
     accum.add(")")
     return $accum
 
-proc bounds*[E: Quadable]( tree: Quadtree[E] ): Option[Square] =
+proc bounds*[E: Quadable](tree: Quadtree[E]): Option[Square] =
     ## Returns the overall bounding box for a tree. This will be 'none' if
     ## this tree doesn't have any content
     if tree.root == nil:
         return none(Square)
     else:
-        return some[Square]((
-            y: tree.root.y,
-            x: tree.root.x,
-            size: tree.root.fullSize
-        ))
+        return some[Square]((y: tree.root.y, x: tree.root.x, size: tree.root.fullSize))
 
 
-template getBoundingBox( elem: Quadable ): Bounds =
+template getBoundingBox(elem: Quadable): Bounds =
     ## Returns the bounding box for an element
     when type(elem) is Bounds:
         elem
     else:
         elem.boundingBox
 
-proc quadContainsBounds( box: Square, elem: Bounds ): bool =
+proc quadContainsBounds(box: Square, elem: Bounds): bool =
     ## Checks whether a quadrant contains the given bounds
     if box.x + box.size < elem.x: return false
     if box.x > elem.x + elem.width: return false
@@ -166,7 +158,7 @@ proc quadContainsBounds( box: Square, elem: Bounds ): bool =
     if box.y > elem.y + elem.height: return false
     return true
 
-template quadContains( box: Square, elem: Quadable ): bool =
+template quadContains(box: Square, elem: Quadable): bool =
     ## Tests whether a quadrant contains an element
     quadContainsBounds(box, getBoundingBox(elem))
 
@@ -191,7 +183,7 @@ proc insertIntoQuadrant[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
             added = true
 
     if not added:
-        raise newException( AssertionError,
+        raise newException(AssertionError,
             ("Element ($#) was not added to any quadrant. " &
             "Tried adding to $#, $#, $# and $#") % [
                 $elem,
@@ -200,10 +192,10 @@ proc insertIntoQuadrant[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
             ]
         )
 
-proc subdivide[E]( tree: var Quadtree[E], node: var Node[E] ) =
+proc subdivide[E](tree: var Quadtree[E], node: var Node[E]) =
     ## Builds a parent node from a leaf node
-    assert( node.halfSize > 1 )
-    assert( node.isLeaf )
+    assert(node.halfSize > 1)
+    assert(node.isLeaf)
 
     # Distribute the elements in this node into the subquadrants
     for elem in node.elems:
@@ -211,7 +203,7 @@ proc subdivide[E]( tree: var Quadtree[E], node: var Node[E] ) =
 
     # Clearing out the 'elems' property makes a node a parent
     node.elems = nil
-    assert( not node.isLeaf )
+    assert(not node.isLeaf)
 
 proc insert[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
     ## Adds the given value to this node. Returns the node that was created
@@ -222,15 +214,15 @@ proc insert[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
     if node.isLeaf:
         if node.elems.len >= tree.maxInQuadrant and node.canSubdivide:
             tree.subdivide(node)
-            tree.insert( node, elem )
+            tree.insert(node, elem)
         else:
-            node.elems.add( elem )
+            node.elems.add(elem)
 
     # Recurse deeper into the tree to insert this node
     else:
         tree.insertIntoQuadrant(node, elem)
 
-proc expand[E]( tree: var Quadtree[E] ) {.inline.} =
+proc expand[E](tree: var Quadtree[E]) {.inline.} =
     ## Expands the bounding box of the tree in all directions
 
     # Expand towards the upper x
@@ -250,8 +242,7 @@ proc expand[E]( tree: var Quadtree[E] ) {.inline.} =
     inner.quad[northwest] = inner
 
 
-
-proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
+proc insert*[E: Quadable](tree: var Quadtree[E], elem: E) =
     ## Adds a new element to a quadtree
     let box = getBoundingBox(elem)
 
@@ -261,7 +252,7 @@ proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
     if tree.root == nil:
         tree.root = Node[E](
             y: box.y - 1, x: box.x - 1,
-            halfSize: ceilPow2( max(max(box.width, box.height), 2) * 2 ),
+            halfSize: ceilPow2(max(max(box.width, box.height), 2) * 2),
             elems: @[ elem ])
 
     else:
@@ -272,8 +263,7 @@ proc insert*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
         tree.insert(tree.root, elem)
 
 
-
-proc getHalf( baseOffset: int, halfSize: int, point: int): Half {.inline.} =
+proc getHalf(baseOffset: int, halfSize: int, point: int): Half {.inline.} =
     ## Returns the half of a node in which a coordinate falls
     if point < baseOffset + halfSize:
         if point < baseOffset:
@@ -286,22 +276,22 @@ proc getHalf( baseOffset: int, halfSize: int, point: int): Half {.inline.} =
         else:
             return Half.high
 
-proc getQuadrant( vertical: Half, horizontal: Half ): Quadrant {.inline.} =
-    ## Maps two halves to the quadrant
+proc getQuadrant(vertical: Half, horizontal: Half): Quadrant {.inline.} =
+    ## Maps two halves of a square to the appropriate quadrant
     case vertical
     of Half.low:
         case horizontal
         of Half.low: return northwest
         of Half.high: return northeast
-        of Half.neither: assert( horizontal != Half.neither )
+        of Half.neither: assert(horizontal != Half.neither)
     of Half.high:
         case horizontal
         of Half.low: return southwest
         of Half.high: return southeast
-        of Half.neither: assert( horizontal != Half.neither )
-    of Half.neither: assert( vertical != Half.neither )
+        of Half.neither: assert(horizontal != Half.neither)
+    of Half.neither: assert(vertical != Half.neither)
 
-proc fetch[E]( node: Node[E], x, y: int ): seq[E] =
+proc fetch[E](node: Node[E], x, y: int): seq[E] =
     ## Descends into a tree to find the values stored for a given point
     if node == nil:
         return @[]
@@ -316,14 +306,13 @@ proc fetch[E]( node: Node[E], x, y: int ): seq[E] =
     else:
         return fetch(node.quad[getQuadrant(vert, horiz)], x, y)
 
-proc fetch*[E: Quadable]( tree: Quadtree[E], x, y: int ): seq[E] =
+proc fetch*[E: Quadable](tree: Quadtree[E], x, y: int): seq[E] =
     ## Returns the elements at the given coordinate
     return fetch(tree.root, x, y)
 
 
-proc delete[E]( node: var Node[E], elem: E ): bool =
-    ## Deletes an element from this node. Returns true if this node is x
-    ## empty because of the delete
+proc delete[E](node: var Node[E], elem: E): bool =
+    ## Deletes an element from this node. Returns true if this node is now empty
     if node.isLeaf:
         keepIf(node.elems, proc(vs: E): bool = not(elem == vs))
         return node.elems.len == 0
@@ -338,7 +327,7 @@ proc delete[E]( node: var Node[E], elem: E ): bool =
                     inc(emptyQuadrants)
         return emptyQuadrants == 4
 
-proc delete*[E: Quadable]( tree: var Quadtree[E], elem: E ) =
+proc delete*[E: Quadable](tree: var Quadtree[E], elem: E) =
     ## Removes the given element from this quadtree
     if tree.root != nil:
         if tree.root.delete(elem):
