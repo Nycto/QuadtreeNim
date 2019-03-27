@@ -25,13 +25,14 @@ type
         `==`(q, q) is bool
         q is Bounds | BoundsProvider
 
-    Half {.pure.} = enum ## \
-        ## Represents half of a node; north vs south, east vs west
+    Half {.pure.} = enum ## Represents half of a node; north vs south, east vs west
         low, high, neither
 
-    Quadrant = enum ## \
-        ## The four subquadrants of a node
+    Quadrant = enum ## The four subquadrants of a node
         northwest, northeast, southeast, southwest
+
+    NodeKind {.pure.} = enum ## leaf nodes versus parent nodes
+        leaf, parent
 
     Node[E] = ref object
         ## A node within the quadtree
@@ -43,7 +44,11 @@ type
         ## * `quad` is a list of sub-quadrants when this node is a parent
         y, x: int
         halfSize: int
-        elems: seq[E]
+        case kind: NodeKind
+        of NodeKind.leaf:
+            elems: seq[E]
+        of NodeKind.parent:
+            discard
         quad: array[northwest..southwest, Node[E]]
 
     Quadtree[E] = object
@@ -73,7 +78,7 @@ iterator quadrants(): Quadrant =
 
 proc isLeaf[E](node: Node[E]): bool {.inline.} =
     ## Whether a node is a leaf in the tree
-    node.elems != nil
+    node.kind == NodeKind.leaf
 
 proc fullSize[E](node: Node[E]): int {.inline.} =
     ## The full width of a node
@@ -138,10 +143,9 @@ proc bounds*[E: Quadable](tree: Quadtree[E]): Option[Square] =
     ## Returns the overall bounding box for a tree. This will be 'none' if
     ## this tree doesn't have any content
     if tree.root == nil:
-        return none(Square)
+        result = none(Square)
     else:
-        return some[Square]((y: tree.root.y, x: tree.root.x, size: tree.root.fullSize))
-
+        result = some[Square]((y: tree.root.y, x: tree.root.x, size: tree.root.fullSize))
 
 template getBoundingBox(elem: Quadable): Bounds =
     ## Returns the bounding box for an element
@@ -177,6 +181,7 @@ proc insertIntoQuadrant[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
                 node.quad[quad] = Node[E](
                     y: box.y, x: box.x,
                     halfSize: int(box.size / 2),
+                    kind: NodeKind.leaf,
                     elems: @[ elem ])
             else:
                 tree.insert(node.quad[quad], elem)
@@ -201,8 +206,8 @@ proc subdivide[E](tree: var Quadtree[E], node: var Node[E]) =
     for elem in node.elems:
         tree.insertIntoQuadrant(node, elem)
 
-    # Clearing out the 'elems' property makes a node a parent
-    node.elems = nil
+    node.kind = NodeKind.parent
+
     assert(not node.isLeaf)
 
 proc insert[E](tree: var Quadtree[E], node: var Node[E], elem: E) =
@@ -230,7 +235,7 @@ proc expand[E](tree: var Quadtree[E]) {.inline.} =
         y: tree.root.y - tree.root.fullSize,
         x: tree.root.x - tree.root.fullSize,
         halfSize: tree.root.fullSize,
-        elems: nil)
+        kind: NodeKind.parent)
     inner.quad[southeast] = tree.root
 
     # Expand towards the lower right
@@ -238,7 +243,7 @@ proc expand[E](tree: var Quadtree[E]) {.inline.} =
         y: inner.y,
         x: inner.x,
         halfSize: inner.fullSize,
-        elems: nil)
+        kind: NodeKind.parent)
     inner.quad[northwest] = inner
 
 
@@ -253,6 +258,7 @@ proc insert*[E: Quadable](tree: var Quadtree[E], elem: E) =
         tree.root = Node[E](
             y: box.y - 1, x: box.x - 1,
             halfSize: ceilPow2(max(max(box.width, box.height), 2) * 2),
+            kind: NodeKind.leaf,
             elems: @[ elem ])
 
     else:
